@@ -1,0 +1,8 @@
+#C++ Stuff
+*.o
+*.exe
+
+#CLion Stuff
+.idea
+cmake-build-debug
+lib
