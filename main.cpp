@@ -22,7 +22,7 @@ const int BAD_BOARD = 3;
 
 /*
  * arg0 = this
- * arg1 = file with all hand combos
+ * arg1 = file with hand combos
  * arg2 = board/empty
  */
 int main(int argc, char **argv)
@@ -32,37 +32,6 @@ int main(int argc, char **argv)
 	{
 		cout << "Usage: handFile [board]\n";
 		exit(BAD_USAGE);
-	}
-
-	string boardPrefix = "pre";
-	if(argc > 2)
-	{
-		boardPrefix = argv[2];
-	}
-
-	//If the output file exists, we don't need to calculate this again
-	ifstream equityFile;
-	equityFile.open("equities/" + boardPrefix + ".txt");
-	if(equityFile.good())
-	{
-		while(!equityFile.eof())
-		{
-			//Read line into string
-			string line;
-			getline(equityFile, line);
-			cout << line << "\n";
-		}
-
-		return 0;
-	}
-
-	//Setup output file
-	ofstream outputFile;
-	outputFile.open("equities/" + boardPrefix + ".txt");
-	if(outputFile.bad())
-	{
-		cout << "Could not open output file\n";
-		exit(BAD_FILE);
 	}
 
 	//Verify the hand file is readable
@@ -85,9 +54,6 @@ int main(int argc, char **argv)
 
 		handCombos.push_back(line);
 	}
-
-	//Remove last empty line
-	handCombos.pop_back();
 
 	//Get board
 	uint64_t board = 0;
@@ -115,9 +81,6 @@ int main(int argc, char **argv)
 	{
 		eqs[i]->wait();
 		auto results = eqs[i]->getResults();
-
-		//Save to file for caching
-		outputFile << handCombos[i] << ": " << results.equity[0] << "\n";
 
 		//And display
 		cout << handCombos[i] << ": " << results.equity[0] << "\n";
