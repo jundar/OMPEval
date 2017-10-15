@@ -34,13 +34,44 @@ int main(int argc, char **argv)
 		exit(BAD_USAGE);
 	}
 
-	//Verify the file is readable
+	string boardPrefix = "pre";
+	if(argc > 2)
+	{
+		boardPrefix = argv[2];
+	}
+
+	//If the output file exists, we don't need to calculate this again
+	ifstream equityFile;
+	equityFile.open("equities/" + boardPrefix + ".txt");
+	if(equityFile.good())
+	{
+		while(!equityFile.eof())
+		{
+			//Read line into string
+			string line;
+			getline(equityFile, line);
+			cout << line << "\n";
+		}
+
+		return 0;
+	}
+
+	//Setup output file
+	ofstream outputFile;
+	outputFile.open("equities/" + boardPrefix + ".txt");
+	if(outputFile.bad())
+	{
+		cout << "Could not open output file\n";
+		exit(BAD_FILE);
+	}
+
+	//Verify the hand file is readable
 	ifstream handFile;
 	handFile.open(argv[1]);
 
 	if(!handFile.good() || !handFile.is_open())
 	{
-		cout << "Could not open file\n";
+		cout << "Could not open input file\n";
 		exit(BAD_FILE);
 	}
 
@@ -84,6 +115,11 @@ int main(int argc, char **argv)
 	{
 		eqs[i]->wait();
 		auto results = eqs[i]->getResults();
+
+		//Save to file for caching
+		outputFile << handCombos[i] << ": " << results.equity[0] << "\n";
+
+		//And display
 		cout << handCombos[i] << ": " << results.equity[0] << "\n";
 	}
 
