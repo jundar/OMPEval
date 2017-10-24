@@ -83,7 +83,7 @@ int main(int argc, char **argv)
 		auto results = eqs[i]->getResults();
 
 		//And display
-		cout << handCombos[i] << ": " << results.equity[0] << "\n";
+		cout << handCombos[i] << "," << results.wins[0] << "," << (int) (results.ties[0] * 2) << "," << results.hands;
 	}
 
 	return 0;

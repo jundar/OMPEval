@@ -733,7 +733,10 @@ void EquityCalculator::updateResults(const BatchResults& stats, bool threadFinis
             mStopped = true;
 
         for (unsigned i = 0; i < mResults.players; ++i)
-            mResults.equity[i] = (mResults.wins[i] + mResults.ties[i]) / (mResults.hands + 1e-9);
+		{
+			mResults.equity[i] = (mResults.wins[i] + mResults.ties[i]) / (mResults.hands + 1e-9);
+		}
+
 
         mUpdateResults = mResults;
 
