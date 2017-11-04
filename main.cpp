@@ -27,63 +27,101 @@ const int BAD_BOARD = 3;
  */
 int main(int argc, char **argv)
 {
+	bool debug = true;
+
 	//Check valid usage
 	if(argc < 2)
 	{
-		cout << "Usage: handFile [board]\n";
+		cout << "Compute range equity: handFile [board]\n";
+		cout << "Get winner: hand1 hand2 board\n";
 		exit(BAD_USAGE);
 	}
 
-	//Verify the hand file is readable
-	ifstream handFile;
-	handFile.open(argv[1]);
-
-	if(!handFile.good() || !handFile.is_open())
+	//Calculate winner for two hands
+	if(argc >= 4)
 	{
-		cout << "Could not open input file\n";
-		exit(BAD_FILE);
+		string hand1 = argv[1];
+		string hand2 = argv[2];
+		uint64_t board = CardRange::getCardMask(argv[3]);
+
+		EquityCalculator winEq;
+		winEq.start({hand1, hand2}, board, {}, false, 0.01);
+		winEq.wait();
+		auto results = winEq.getResults();
+
+		/*
+		 * tie 					= 	-1
+		 * first player wins	= 	0
+		 * second player wins	= 	1
+		 */
+		int winner = -1;
+		if(results.wins[0] > 0)
+		{
+			winner = 0;
+		}
+
+		else if(results.wins[1] > 0)
+		{
+			winner = 1;
+		}
+
+		cout << winner << "\n";
 	}
 
-	//Read hands into list of strings
-	vector<string> handCombos;
-	while(!handFile.eof())
+	//Calculate equity for range
+	else
 	{
-		//Read line into string
-		string line;
-		getline(handFile, line);
+		//Verify the hand file is readable
+		ifstream handFile;
+		handFile.open(argv[1]);
 
-		handCombos.push_back(line);
-	}
+		if(!handFile.good() || !handFile.is_open())
+		{
+			cout << "Could not open input file\n";
+			exit(BAD_FILE);
+		}
 
-	//Get board
-	uint64_t board = 0;
-	if(argc > 2)
-	{
-		board = CardRange::getCardMask(argv[2]);
-	}
+		//Read hands into list of strings
+		vector<string> handCombos;
+		while(!handFile.eof())
+		{
+			//Read line into string
+			string line;
+			getline(handFile, line);
 
-	//Create equity calculators for each hand combo
-	omp::EquityCalculator **eqs = new omp::EquityCalculator*[handCombos.size()];
-	for(int i=0; i<handCombos.size(); i++)
-	{
-		eqs[i] = new omp::EquityCalculator();
-	}
+			handCombos.push_back(line);
+		}
 
-	//Calculate equities for each hand combo against a random range
-	for(int i=0; i<handCombos.size(); i++)
-	{
-		string hand = handCombos[i];
-		eqs[i]->start({hand, "random"}, board, {}, false, 0.01);
-	}
+		//Get board
+		uint64_t board = 0;
+		if(argc > 2)
+		{
+			board = CardRange::getCardMask(argv[2]);
+		}
 
-	//All threads should be started, now we just need to wait on each one in turn
-	for(int i=0; i<handCombos.size(); i++)
-	{
-		eqs[i]->wait();
-		auto results = eqs[i]->getResults();
+		//Create equity calculators for each hand combo
+		omp::EquityCalculator **eqs = new omp::EquityCalculator*[handCombos.size()];
+		for(int i=0; i<handCombos.size(); i++)
+		{
+			eqs[i] = new omp::EquityCalculator();
+		}
 
-		//And display
-		cout << handCombos[i] << "," << results.wins[0] << "," << (int) (results.ties[0] * 2) << "," << results.hands;
+		//Calculate equities for each hand combo against a random range
+		for(int i=0; i<handCombos.size(); i++)
+		{
+			string hand = handCombos[i];
+			eqs[i]->start({hand, "random"}, board, {}, false, 0.01);
+		}
+
+		//All threads should be started, now we just need to wait on each one in turn
+		for(int i=0; i<handCombos.size(); i++)
+		{
+			eqs[i]->wait();
+			auto results = eqs[i]->getResults();
+
+			//And display
+			cout << handCombos[i] << "," << results.wins[0] << "," << (int) (results.ties[0] * 2) << "," << results.hands << "\n";
+		}
 	}
 
 	return 0;
